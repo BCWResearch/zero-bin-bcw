@@ -26,8 +26,7 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Start Docker
-        run: |
-          sudo systemctl start docker
+        run: sudo service docker start
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

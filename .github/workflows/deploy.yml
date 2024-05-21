@@ -67,8 +67,7 @@ jobs:
           push: true
           tags: ${{ steps.worker-meta.outputs.tags }}
           labels: ${{ steps.worker-meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          no-cache: true
 
       - name: Build and push leader
         uses: docker/build-push-action@v5
@@ -78,8 +77,7 @@ jobs:
           push: true
           tags: ${{ steps.leader-meta.outputs.tags }}
           labels: ${{ steps.leader-meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          no-cache: true
 
   deploy:
     name: Deploy to GKE

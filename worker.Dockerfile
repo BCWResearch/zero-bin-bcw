@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly-bullseye-slim as builder
+FROM rustlang/rust:nightly as builder
 
 # Install jemalloc
 RUN apt-get update && apt-get install -y libjemalloc2 libjemalloc-dev make
@@ -16,8 +16,8 @@ COPY common/Cargo.toml ./common/Cargo.toml
 COPY ops/Cargo.toml ./ops/Cargo.toml
 COPY worker/Cargo.toml ./worker/Cargo.toml
 
-COPY ./rust-toolchain.toml ./
-
+COPY rust-toolchain.toml .
+COPY .cargo ./.cargo
 
 COPY common ./common
 COPY ops ./ops

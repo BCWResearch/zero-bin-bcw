@@ -1,2 +1,2 @@
-[build]
-rustflags = ["-C", "target-cpu=znver4", "-C", "link-arg=nostart-stop-gc"]
+# [build]
+# rustflags = ["-C", "target-cpu=znver4", "-C", "link-arg=nostart-stop-gc"]

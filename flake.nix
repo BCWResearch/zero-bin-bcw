@@ -31,7 +31,7 @@
           rustVersion = "2024-05-23"; # "2024-05-23"
           packageFun = import ./Cargo.nix;
 
-          extraRustComponents = ["rustfmt" "clippy"];
+          extraRustComponents = ["rustfmt" "clippy" "rustc-dev"];
 
           # packageOverrides = pkgs: pkgs.rustBuilder.overrides.all ++ [
           #   (pkgs.rustBuilder.rustLib.makeOverride {
@@ -47,13 +47,15 @@
 
         workspaceShell = rustPkgs.workspaceShell {
           # This adds cargo2nix to the project shell via the cargo2nix flake
-          # packages = [
-          #   cargo2nix.packages."${system}".cargo2nix
+          packages = [
+            cargo2nix.packages."${system}".cargo2nix
+          ];
+          # buildInputs = [
+          #   pkgs.clang
+          #   pkgs.openssl
           # ];
 
           # CARGO_HTTP_MULTIPLEXING = "false";
-          # CARGO_HOME = ./.cargo;
-          # RUSTUP_HOME = ./.cargo;
         };
 
         bootstrapShell = pkgs.mkShell {

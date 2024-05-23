@@ -1503,7 +1503,7 @@ in
     name = "common";
     version = "0.1.0";
     registry = "unknown";
-    src = fetchCrateLocal workspaceSrc;
+    src = fetchCrateLocal (workspaceSrc + "/common");
     dependencies = {
       anyhow = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".anyhow."1.0.86" { inherit profileName; }).out;
       clap = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap."4.5.4" { inherit profileName; }).out;
@@ -1604,7 +1604,7 @@ in
     name = "coordinator";
     version = "0.1.0";
     registry = "unknown";
-    src = fetchCrateLocal workspaceSrc;
+    src = fetchCrateLocal (workspaceSrc + "/coordinator");
     dependencies = {
       actix_rt = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".actix-rt."2.9.0" { inherit profileName; }).out;
       actix_web = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".actix-web."4.6.0" { inherit profileName; }).out;
@@ -2336,7 +2336,7 @@ in
     version = "0.1.3";
     registry = "git+https://github.com/0xPolygonZero/zk_evm.git";
     src = fetchCrateGit {
-      url = https://github.com/0xPolygonZero/zk_evm.git;
+      url = "https://github.com/0xPolygonZero/zk_evm.git";
       name = "evm_arithmetization";
       version = "0.1.3";
       rev = "c55f9e05f571b1b8658315e6de83427fe1d4efa3";};
@@ -2754,7 +2754,7 @@ in
     name = "gascalc";
     version = "0.1.0";
     registry = "unknown";
-    src = fetchCrateLocal workspaceSrc;
+    src = fetchCrateLocal (workspaceSrc + "/gascalc");
     dependencies = {
       tokio = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tokio."1.37.0" { inherit profileName; }).out;
       web3 = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".web3."0.19.0" { inherit profileName; }).out;
@@ -3761,7 +3761,7 @@ in
     name = "leader";
     version = "0.1.0";
     registry = "unknown";
-    src = fetchCrateLocal workspaceSrc;
+    src = fetchCrateLocal (workspaceSrc + "/leader");
     features = builtins.concatLists [
       [ "default" ]
       (lib.optional (rootFeatures' ? "leader/test_only") "test_only")
@@ -4021,7 +4021,7 @@ in
     version = "0.2.1";
     registry = "git+https://github.com/0xPolygonZero/zk_evm.git";
     src = fetchCrateGit {
-      url = https://github.com/0xPolygonZero/zk_evm.git;
+      url = "https://github.com/0xPolygonZero/zk_evm.git";
       name = "mpt_trie";
       version = "0.2.1";
       rev = "c55f9e05f571b1b8658315e6de83427fe1d4efa3";};
@@ -4353,7 +4353,7 @@ in
     name = "ops";
     version = "0.1.0";
     registry = "unknown";
-    src = fetchCrateLocal workspaceSrc;
+    src = fetchCrateLocal (workspaceSrc + "/ops");
     features = builtins.concatLists [
       [ "default" ]
       (lib.optional (rootFeatures' ? "leader/test_only" || rootFeatures' ? "ops/test_only" || rootFeatures' ? "prover/test_only") "test_only")
@@ -5006,7 +5006,7 @@ in
     version = "0.1.3";
     registry = "git+https://github.com/0xPolygonZero/zk_evm.git";
     src = fetchCrateGit {
-      url = https://github.com/0xPolygonZero/zk_evm.git;
+      url = "https://github.com/0xPolygonZero/zk_evm.git";
       name = "proof_gen";
       version = "0.1.3";
       rev = "c55f9e05f571b1b8658315e6de83427fe1d4efa3";};
@@ -5024,7 +5024,7 @@ in
     name = "prover";
     version = "0.1.0";
     registry = "unknown";
-    src = fetchCrateLocal workspaceSrc;
+    src = fetchCrateLocal (workspaceSrc + "/prover");
     features = builtins.concatLists [
       [ "default" ]
       (lib.optional (rootFeatures' ? "leader/test_only" || rootFeatures' ? "prover/test_only") "test_only")
@@ -5441,7 +5441,7 @@ in
     name = "rpc";
     version = "0.1.0";
     registry = "unknown";
-    src = fetchCrateLocal workspaceSrc;
+    src = fetchCrateLocal (workspaceSrc + "/rpc");
     dependencies = {
       anyhow = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".anyhow."1.0.86" { inherit profileName; }).out;
       clap = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap."4.5.4" { inherit profileName; }).out;
@@ -6797,7 +6797,7 @@ in
     version = "0.3.1";
     registry = "git+https://github.com/0xPolygonZero/zk_evm.git";
     src = fetchCrateGit {
-      url = https://github.com/0xPolygonZero/zk_evm.git;
+      url = "https://github.com/0xPolygonZero/zk_evm.git";
       name = "trace_decoder";
       version = "0.3.1";
       rev = "c55f9e05f571b1b8658315e6de83427fe1d4efa3";};
@@ -7098,7 +7098,7 @@ in
     name = "verifier";
     version = "0.1.0";
     registry = "unknown";
-    src = fetchCrateLocal workspaceSrc;
+    src = fetchCrateLocal (workspaceSrc + "/verifier");
     dependencies = {
       anyhow = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".anyhow."1.0.86" { inherit profileName; }).out;
       clap = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap."4.5.4" { inherit profileName; }).out;
@@ -7725,7 +7725,7 @@ in
     name = "worker";
     version = "0.1.0";
     registry = "unknown";
-    src = fetchCrateLocal workspaceSrc;
+    src = fetchCrateLocal (workspaceSrc + "/worker");
     dependencies = {
       anyhow = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".anyhow."1.0.86" { inherit profileName; }).out;
       clap = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap."4.5.4" { inherit profileName; }).out;

@@ -20,6 +20,7 @@ in with pkgs; {
     rust-bin.nightly.latest.default
     pkg-config
     openssl
+    clang
 
     ## seems to compile without these -sys deps, until i know better lets just have them
     ## cargo tree | grep -i sys

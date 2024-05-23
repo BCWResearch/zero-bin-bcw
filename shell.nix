@@ -1,17 +1,8 @@
-{ env ? "local" }:
-
-## import pinned package tree
-with (import ./pkgs.nix);
-let
-  deps = pkgs.callPackage ./deps.nix { inherit pkgs env; };
-in pkgs.mkShell {
-  buildInputs = deps.packages;
-
-  # RUST_BACKTRACE = 1;
-  LD_LIBRARY_PATH = lib.makeLibraryPath [
-    pkgs.openssl
-
-    ## not sure if needed, maybe tests just dont cover them
-    pkgs.jemalloc pkgs.zstd pkgs.secp256k1
-  ];
-}
+(import
+  (let
+    lock = builtins.fromJSON (builtins.readFile ./flake.lock);
+  in fetchTarball {
+    url = "https://github.com/edolstra/flake-compat/archive/${lock.nodes.flake-compat.locked.rev}.tar.gz";
+    sha256 = lock.nodes.flake-compat.locked.narHash;
+  }) { src = ./.; }
+).shellNix

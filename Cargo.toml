@@ -1,5 +1,15 @@
 [workspace]
-members = ["leader", "worker", "common", "ops", "verifier", "rpc", "prover", "coordinator", "gascalc"]
+members = [
+  "leader",
+  "worker",
+  "common",
+  "ops",
+  "verifier",
+  "rpc",
+  "prover",
+  "coordinator",
+  "gascalc",
+]
 resolver = "2"
 
 [workspace.dependencies]
@@ -43,3 +53,4 @@ opt-level = 3
 incremental = true
 lto = "fat"
 codegen-units = 1
+# debug = true

@@ -43,7 +43,7 @@ in if !lockHashIgnored && (nixifiedLockHash != currentLockHash) then
 else let
   inherit (rustLib) fetchCratesIo fetchCrateLocal fetchCrateGit fetchCrateAlternativeRegistry expandFeatures decideProfile genDrvsByProfile;
   profilesByName = {
-    release = builtins.fromTOML "codegen-units = 1\ndebug = true\nincremental = true\nopt-level = 3\n";
+    release = builtins.fromTOML "codegen-units = 1\nincremental = true\nlto = \"fat\"\nopt-level = 3\n";
   };
   rootFeatures' = expandFeatures rootFeatures;
   overridableMkRustCrate = f:

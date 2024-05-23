@@ -1,7 +1,7 @@
 # https://github.com/cargo2nix/cargo2nix/blob/release-0.11.0/flake.nix
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=release-23.11";
+    nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
@@ -9,7 +9,7 @@
       inputs.flake-utils.follows = "flake-utils";
     };
     cargo2nix = {
-      url = "github:cargo2nix/cargo2nix";
+      url = "github:cargo2nix/cargo2nix/main";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
       inputs.rust-overlay.follows = "rust-overlay";
@@ -51,7 +51,7 @@
           #   cargo2nix.packages."${system}".cargo2nix
           # ];
 
-          CARGO_HTTP_MULTIPLEXING = "false";
+          # CARGO_HTTP_MULTIPLEXING = "false";
           # CARGO_HOME = ./.cargo;
           # RUSTUP_HOME = ./.cargo;
         };

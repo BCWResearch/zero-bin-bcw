@@ -3,6 +3,12 @@ FROM rustlang/rust:nightly-bullseye-slim as builder
 # Install jemalloc
 RUN apt-get update && apt-get install -y libjemalloc2 libjemalloc-dev make
 
+# Install llvm-tools-preview (requirement for cargo-pgo)
+RUN rustup component add llvm-tools-preview
+
+# Install cargo-pgo
+RUN cargo install cargo-pgo
+
 RUN \
     mkdir -p common/src  && touch common/src/lib.rs && \
     mkdir -p ops/src     && touch ops/src/lib.rs && \

@@ -39,7 +39,7 @@ RUN cargo pgo build -- --bin worker
 
 FROM debian:bullseye-slim
 RUN apt-get update && apt-get install -y ca-certificates libjemalloc2
-COPY --from=builder ./target/release/worker /usr/local/bin/worker
+COPY --from=builder ./target/x86_64-unknown-linux-gnu/release/worker /usr/local/bin/worker
 
 # TODO: should we specify the block to run profiling with in this command?
 #   or leave that to the CICD?

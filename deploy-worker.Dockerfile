@@ -25,7 +25,8 @@ COPY worker/Cargo.toml ./worker/Cargo.toml
 
 COPY ./rust-toolchain.toml ./
 
-RUN cargo build --release --bin worker
+# NOTE: do not need to specify `--release`, it is added automatically by `cargo pgo`.
+RUN cargo pgo optimize -- --bin worker
 
 COPY common ./common
 COPY ops ./ops
@@ -35,7 +36,7 @@ RUN \
     touch ops/src/lib.rs && \
     touch worker/src/main.rs
 
-RUN cargo build --release --bin worker
+RUN cargo pgo optimize -- --bin worker
 
 FROM debian:bullseye-slim
 RUN apt-get update && apt-get install -y ca-certificates libjemalloc2 make libssl-dev

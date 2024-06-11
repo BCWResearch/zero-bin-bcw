@@ -24,7 +24,8 @@ COPY worker/Cargo.toml ./worker/Cargo.toml
 
 COPY ./rust-toolchain.toml ./
 
-RUN cargo pgo build --verbose --release --bin worker
+# NOTE: do not need to specify `--release`, it is added automatically by `cargo pgo`.
+RUN cargo pgo build -- --bin worker
 
 COPY common ./common
 COPY ops ./ops
@@ -34,9 +35,12 @@ RUN \
     touch ops/src/lib.rs && \
     touch worker/src/main.rs
 
-RUN cargo pgo build --verbose --release --bin worker
+RUN cargo pgo build -- --bin worker
 
 FROM debian:bullseye-slim
 RUN apt-get update && apt-get install -y ca-certificates libjemalloc2
 COPY --from=builder ./target/release/worker /usr/local/bin/worker
+
+# TODO: should we specify the block to run profiling with in this command?
+#   or leave that to the CICD?
 CMD ["worker"]

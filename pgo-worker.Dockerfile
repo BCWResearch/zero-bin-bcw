@@ -42,10 +42,11 @@ COPY --from=builder ./target/x86_64-unknown-linux-gnu/release/worker /usr/local/
 
 # TODO: should we specify the block to run profiling with in this command?
 #   or leave that to the CICD?
+# Recommended block=4825, checkpoint=4824
 CMD ["worker"]
 
 # NOTE: after deploying this and running it with an example block, the profiling data will be available here (default path), as a single file:
-#   `./target/pgo-profiles/<SOME RANDOM HASH>.profraw`
+#   `./target/pgo-profiles/<SOME_RANDOM_HASH>.profraw`
 # but you can configure the file path by setting this environment variable:
 #   `export LLVM_PROFILE_FILE="./EXAMPLE/PATH/TO/PROFILING_DATA/%m.profraw"`
-# This file will need to be uploaded to the CICD somehow, so that the `deploy-worker.Dockerfile` can use it to compile the optimized worker.
+# This file will need to be uploaded to the CICD somehow, so that the `deploy-worker.Dockerfile` can download it and use it to compile the optimized worker.

@@ -12,13 +12,14 @@ COPY Cargo.toml .
 RUN sed -i "2s/.*/members = [\"common\", \"ops\", \"worker\"]/" Cargo.toml
 COPY Cargo.lock .
 
+COPY .cargo/config.toml ./.cargo/config.toml
 COPY common/Cargo.toml ./common/Cargo.toml
 COPY ops/Cargo.toml ./ops/Cargo.toml
 COPY worker/Cargo.toml ./worker/Cargo.toml
 
 COPY ./rust-toolchain.toml ./
 
-RUN cargo build --verbose --release --bin worker
+RUN cargo build --release --bin worker
 
 COPY common ./common
 COPY ops ./ops
@@ -28,7 +29,7 @@ RUN \
     touch ops/src/lib.rs && \
     touch worker/src/main.rs
 
-RUN cargo build --verbose --release --bin worker
+RUN cargo build --release --bin worker
 
 FROM debian:bullseye-slim
 RUN apt-get update && apt-get install -y ca-certificates libjemalloc2 make libssl-dev

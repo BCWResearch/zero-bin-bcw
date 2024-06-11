@@ -1,12 +1,11 @@
+# NOTE: only a single worker needs to be deployed in k8s for this step.
+
 FROM rustlang/rust:nightly-bullseye-slim@sha256:2be4bacfc86e0ec62dfa287949ceb47f9b6d9055536769bdee87b7c1788077a9 as builder
 
 # Install jemalloc
 RUN apt-get update && apt-get install -y libjemalloc2 libjemalloc-dev make clang-16
 
-# Install llvm-tools-preview (requirement for cargo-pgo)
-RUN rustup component add llvm-tools-preview
-
-# Install cargo-pgo
+# Install cargo-pgo, used for building a binary with profiling enabled
 RUN cargo install cargo-pgo
 
 RUN \
@@ -24,7 +23,7 @@ COPY worker/Cargo.toml ./worker/Cargo.toml
 
 COPY ./rust-toolchain.toml ./
 
-# NOTE: do not need to specify `--release`, it is added automatically by `cargo pgo`.
+# do not need to specify `--release`, it is added automatically by `cargo pgo`.
 RUN cargo pgo build -- --bin worker
 
 COPY common ./common
@@ -44,3 +43,9 @@ COPY --from=builder ./target/x86_64-unknown-linux-gnu/release/worker /usr/local/
 # TODO: should we specify the block to run profiling with in this command?
 #   or leave that to the CICD?
 CMD ["worker"]
+
+# NOTE: after deploying this and running it with an example block, the profiling data will be available here (default path), as a single file:
+#   `./target/pgo-profiles/<SOME RANDOM HASH>.profraw`
+# but you can configure the file path by setting this environment variable:
+#   `export LLVM_PROFILE_FILE="./EXAMPLE/PATH/TO/PROFILING_DATA/%m.profraw"`
+# This file will need to be uploaded to the CICD somehow, so that the `deploy-worker.Dockerfile` can use it to compile the optimized worker.

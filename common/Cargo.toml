@@ -16,7 +16,9 @@ plonky2 = { workspace = true }
 evm_arithmetization = { workspace = true }
 clap = { workspace = true }
 anyhow = { workspace = true }
-trace_decoder = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-seahash = "4.1.0"
+futures = { workspace = true }
+tokio = { workspace = true }
+alloy = { workspace = true }
+async-stream = "0.3.5"

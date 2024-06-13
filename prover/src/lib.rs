@@ -1,16 +1,18 @@
+use std::future::Future;
 use std::time::{Duration, Instant};
 
+use alloy::primitives::U256;
 use anyhow::Result;
-use ethereum_types::U256;
-#[cfg(feature = "test_only")]
-use futures::stream::TryStreamExt;
+use futures::{future::BoxFuture, stream::FuturesOrdered, FutureExt, TryFutureExt, TryStreamExt};
+use num_traits::ToPrimitive as _;
 use ops::TxProof;
 use paladin::{
     directive::{Directive, IndexedStream},
     runtime::Runtime,
 };
-use proof_gen::{proof_types::GeneratedBlockProof, types::PlonkyProofIntern};
+use proof_gen::proof_types::GeneratedBlockProof;
 use serde::{Deserialize, Serialize};
+use tokio::sync::oneshot;
 use trace_decoder::{
     processed_block_trace::ProcessingMeta,
     trace_protocol::BlockTrace,
@@ -19,14 +21,14 @@ use trace_decoder::{
 use tracing::info;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ProverInput {
+pub struct BlockProverInput {
     pub block_trace: BlockTrace,
     pub other_data: OtherBlockData,
 }
 fn resolve_code_hash_fn(_: &CodeHash) -> Vec<u8> {
     todo!()
 }
-
+#[derive(Debug, Clone)]
 pub struct BenchmarkedGeneratedBlockProof {
     pub proof: GeneratedBlockProof,
     pub prep_dur: Option<Duration>,
@@ -40,20 +42,23 @@ impl From<BenchmarkedGeneratedBlockProof> for GeneratedBlockProof {
     }
 }
 
-impl ProverInput {
+impl BlockProverInput {
     pub fn get_block_number(&self) -> U256 {
-        self.other_data.b_data.b_meta.block_number
+        self.other_data.b_data.b_meta.block_number.into()
     }
 
+    /// Evaluates a singular block
     #[cfg(not(feature = "test_only"))]
     pub async fn prove_and_benchmark(
         self,
         runtime: &Runtime,
-        previous: Option<PlonkyProofIntern>,
+        previous: Option<impl Future<Output = Result<BenchmarkedGeneratedBlockProof>>>,
         save_inputs_on_error: bool,
     ) -> Result<BenchmarkedGeneratedBlockProof> {
+        // Start timing for preparation
         let prep_start = Instant::now();
 
+        // Basic preparation
         let block_number = self.get_block_number();
         let other_data = self.other_data;
         let txs = self.block_trace.into_txn_proof_gen_ir(
@@ -61,6 +66,7 @@ impl ProverInput {
             other_data.clone(),
         )?;
 
+        // Get time took to prepare
         let prep_dur = prep_start.elapsed();
 
         info!(
@@ -69,6 +75,7 @@ impl ProverInput {
             prep_dur.as_secs_f64()
         );
 
+        // Time the agg proof
         let proof_start = Instant::now();
         let agg_proof = IndexedStream::from(txs)
             .map(&TxProof {
@@ -87,16 +94,17 @@ impl ProverInput {
             proof_dur.as_secs_f64()
         );
 
+        //
         if let proof_gen::proof_types::AggregatableProof::Agg(proof) = agg_proof {
             let agg_start = Instant::now();
-            let prev = previous.map(|p| GeneratedBlockProof {
-                b_height: block_number.as_u64() - 1,
-                intern: p,
-            });
+            let prev = match previous {
+                Some(it) => Some(it.await?),
+                None => None,
+            };
 
             let block_proof = paladin::directive::Literal(proof)
                 .map(&ops::BlockProof {
-                    prev,
+                    prev: prev.map(|prev| prev.proof),
                     save_inputs_on_error,
                 })
                 .run(runtime)
@@ -127,9 +135,11 @@ impl ProverInput {
     pub async fn prove(
         self,
         runtime: &Runtime,
-        previous: Option<PlonkyProofIntern>,
+        previous: Option<impl Future<Output = Result<GeneratedBlockProof>>>,
         save_inputs_on_error: bool,
     ) -> Result<GeneratedBlockProof> {
+        use anyhow::Context as _;
+
         let block_number = self.get_block_number();
         let other_data = self.other_data;
         let txs = self.block_trace.into_txn_proof_gen_ir(
@@ -148,10 +158,13 @@ impl ProverInput {
             .await?;
 
         if let proof_gen::proof_types::AggregatableProof::Agg(proof) = agg_proof {
-            let prev = previous.map(|p| GeneratedBlockProof {
-                b_height: block_number.as_u64() - 1,
-                intern: p,
-            });
+            let _block_number = block_number
+                .to_u64()
+                .context("block number overflows u64")?;
+            let prev = match previous {
+                Some(it) => Some(it.await?),
+                None => None,
+            };
 
             let block_proof = paladin::directive::Literal(proof)
                 .map(&ops::BlockProof {
@@ -172,7 +185,7 @@ impl ProverInput {
     pub async fn prove(
         self,
         runtime: &Runtime,
-        _previous: Option<PlonkyProofIntern>,
+        _previous: Option<impl Future<Output = Result<GeneratedBlockProof>>>,
         save_inputs_on_error: bool,
     ) -> Result<GeneratedBlockProof> {
         let block_number = self.get_block_number();
@@ -197,8 +210,98 @@ impl ProverInput {
 
         // Dummy proof to match expected output type.
         Ok(GeneratedBlockProof {
-            b_height: block_number.as_u64(),
+            b_height: block_number
+                .to_u64()
+                .expect("Block number should fit in a u64"),
             intern: proof_gen::proof_gen::dummy_proof()?,
         })
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ProverInput {
+    pub blocks: Vec<BlockProverInput>,
+}
+
+impl ProverInput {
+    pub async fn prove_and_benchmark(
+        self,
+        runtime: &Runtime,
+        previous_proof: Option<BenchmarkedGeneratedBlockProof>,
+        save_inputs_on_error: bool,
+    ) -> Result<Vec<BenchmarkedGeneratedBlockProof>> {
+        let mut prev: Option<BoxFuture<Result<BenchmarkedGeneratedBlockProof>>> =
+            previous_proof.map(|proof| Box::pin(futures::future::ok(proof)) as BoxFuture<_>);
+
+        let results: FuturesOrdered<_> = self
+            .blocks
+            .into_iter()
+            .map(|block| {
+                let block_number = block.get_block_number();
+                info!("Proving block {block_number}");
+
+                let (tx, rx) = oneshot::channel::<BenchmarkedGeneratedBlockProof>();
+
+                let fut = block
+                    .prove_and_benchmark(runtime, prev.take(), save_inputs_on_error)
+                    .then(|proof| async {
+                        let proof = proof?;
+
+                        if tx.send(proof.clone()).is_err() {
+                            anyhow::bail!("Failed to send proof");
+                        }
+
+                        Ok(proof)
+                    })
+                    .boxed();
+
+                prev = Some(Box::pin(rx.map_err(anyhow::Error::new)));
+
+                fut
+            })
+            .collect();
+
+        results.try_collect().await
+    }
+
+    pub async fn prove(
+        self,
+        runtime: &Runtime,
+        previous_proof: Option<GeneratedBlockProof>,
+        save_inputs_on_error: bool,
+    ) -> Result<Vec<GeneratedBlockProof>> {
+        let mut prev: Option<BoxFuture<Result<GeneratedBlockProof>>> =
+            previous_proof.map(|proof| Box::pin(futures::future::ok(proof)) as BoxFuture<_>);
+
+        let results: FuturesOrdered<_> = self
+            .blocks
+            .into_iter()
+            .map(|block| {
+                let block_number = block.get_block_number();
+                info!("Proving block {block_number}");
+
+                let (tx, rx) = oneshot::channel::<GeneratedBlockProof>();
+
+                // Prove the block
+                let fut = block
+                    .prove(runtime, prev.take(), save_inputs_on_error)
+                    .then(|proof| async {
+                        let proof = proof?;
+
+                        if tx.send(proof.clone()).is_err() {
+                            anyhow::bail!("Failed to send proof");
+                        }
+
+                        Ok(proof)
+                    })
+                    .boxed();
+
+                prev = Some(Box::pin(rx.map_err(anyhow::Error::new)));
+
+                fut
+            })
+            .collect();
+
+        results.try_collect().await
     }
 }

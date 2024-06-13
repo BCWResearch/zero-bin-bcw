@@ -20,7 +20,10 @@ export TOKIO_WORKER_THREADS=$num_procs
 export RUST_MIN_STACK=33554432
 export RUST_BACKTRACE=full
 export RUST_LOG=info
-export RUSTFLAGS='-C target-cpu=native'
+# Disable the lld linker for now, as it's causing issues with the linkme package.
+# https://github.com/rust-lang/rust/pull/124129
+# https://github.com/dtolnay/linkme/pull/88
+export RUSTFLAGS='-C target-cpu=native -Zlinker-features=-lld'
 
 if [[ $1 == "test_only" ]]; then
     # Circuit sizes don't matter in test_only mode, so we keep them minimal.
@@ -47,7 +50,7 @@ fi
 # proof. This is useful for quickly testing decoding and all of the
 # other non-proving code.
 if [[ $1 == "test_only" ]]; then
-    cargo run --release --features test_only --bin leader -- --runtime in-memory stdio < witness.json | tee test.out
+    cargo run --release --features test_only --bin leader -- --runtime in-memory --load-strategy on-demand stdio < witness.json | tee test.out
     if grep 'Successfully generated witness for block' test.out; then
         echo "Success - Note this was just a test, not a proof"
         exit
@@ -60,14 +63,14 @@ fi
 cargo build --release --jobs "$num_procs"
 
 start_time=$(date +%s%N)
-../target/release/leader --runtime in-memory stdio < witness.json | tee leader.out
+../target/release/leader --runtime in-memory --load-strategy monolithic stdio < witness.json | tee leader.out
 end_time=$(date +%s%N)
 
 tail -n 1 leader.out > proof.json
 
 ../target/release/verifier -f proof.json | tee verify.out
 
-if grep 'Proof verified successfully!' verify.out; then
+if grep -q 'Proof verified successfully!' verify.out; then
     duration_ns=$((end_time - start_time))
     duration_sec=$(echo "$duration_ns / 1000000000" | bc -l)
     echo "Success!"

@@ -16,6 +16,7 @@ prover = { path = "../prover" }
 rpc = { path = "../rpc" }
 common = { path = "../common" }
 leader = { path = "../leader" }
+alloy = {workspace = true}
 
 # 3rd parties
 tokio = { workspace = true }

@@ -1,10 +1,9 @@
 //! This is useful for fetching [ProverInput] per block
 use alloy::{providers::RootProvider, rpc::types::{BlockId, BlockNumberOrTag}};
 use anyhow::Error;
-use prover::ProverInput;
-use common::block_interval::{self, BlockInterval};
-use rpc::prover_input;
-use tracing::{error, info};
+use common::block_interval::BlockInterval;
+use rpc::{benchmark_prover_input, BenchmarkedProverInput};
+use tracing::info;
 
 use super::input::BlockSource;
 
@@ -30,7 +29,7 @@ impl std::error::Error for FetchError {}
 
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub enum Checkpoint {
-    Constant(u64),
+    Constant(BlockId),
     BlockNumberNegativeOffset(u64),
 }
 
@@ -41,57 +40,50 @@ impl Default for Checkpoint {
 }
 
 impl Checkpoint {
-    pub fn get_checkpoint(&self, block_number: u64) -> u64 {
+
+    pub fn get_checkpoint_from_blocknum(&self, block_number: u64) -> BlockId {
         match self {
-            Self::BlockNumberNegativeOffset(offset) if block_number > *offset => {
-                block_number - offset
-            }
-            Self::BlockNumberNegativeOffset(_) => 0,
-            Self::Constant(constant_value) => *constant_value,
+            Self::Constant(num @ BlockId::Number(_)) => *num,
+            Self::Constant(BlockId::Hash(_)) => unreachable!("Coordinator does not support Hash Block IDs"),
+            Self::BlockNumberNegativeOffset(offset) => BlockId::Number(BlockNumberOrTag::Number(block_number - *offset))
+        }
+    }
+
+    pub fn get_checkpoint_from_interval(&self, block_interval: BlockInterval) -> BlockId {
+        match block_interval {
+            BlockInterval::FollowFrom { start_block, block_time: _ } => self.get_checkpoint_from_blocknum(start_block),
+            BlockInterval::Range(range) => self.get_checkpoint_from_blocknum(range.start),
+            BlockInterval::SingleBlockId(BlockId::Number(BlockNumberOrTag::Number(start))) => self.get_checkpoint_from_blocknum(start),
+            BlockInterval::SingleBlockId(BlockId::Number(_) | BlockId::Hash(_)) => todo!("Coordinator only supports Numbers, not Tags or Block Hashes"),
         }
     }
 }
 
 /// Fetches the prover input given the [BlockSource]
 pub async fn fetch(
-    block_number: BlockInterval,
+    block_interval: BlockInterval,
     checkpoint_method: &Option<Checkpoint>,
     source: &BlockSource,
-) -> Result<ProverInput, FetchError> {
+) -> Result<BenchmarkedProverInput, FetchError> {
     match source {
         // Use ZeroBing's RPC fetch
         BlockSource::ZeroBinRpc { rpc_url } => {
             info!(
                 "Requesting from block {} from RPC ({})",
-                block_number, rpc_url
+                block_interval, rpc_url
             );
 
-            
-            // let fetch_prover_input_request = FetchProverInputRequest {
-            //     rpc_url: rpc_url.as_str(),
-            //     block_number,
-            //     checkpoint_block_number: checkpoint_method
-            //         .unwrap_or_default()
-            //         .get_checkpoint(block_number),
-            // };
+            let checkpoint = checkpoint_method.unwrap_or_default().get_checkpoint_from_interval(block_interval.clone());
 
-            // match prover_input(fetch_prover_input_request).await {
-            //     Ok(prover_input) => Ok(prover_input),
-            //     Err(err) => {
-            //         error!("Failed to fetch prover input: {}", err);
-            //         Err(FetchError::ZeroBinRpcFetchError(err))
-            //     }
-            // }
-
-            let checkpoint = match (checkpoint_method.unwrap_or(Checkpoint::BlockNumberNegativeOffset(1)), block_number) {
-                (Checkpoint::Constant(constant), _) => constant,
-                (Checkpoint::BlockNumberNegativeOffset(offset), BlockInterval::SingleBlockId(BlockId::Number(start_block)) | BlockInterval::FollowFrom { start_block, block_time: _ }) => start_block - offset,
-                (Checkpoint::BlockNumberNegativeOffset(offset), BlockInterval::Range(range)) => range.start - offset,
+            let provider_url = match url::Url::parse(rpc_url) {
+                Ok(url) => url,
+                Err(err) => return Err(FetchError::ZeroBinRpcFetchError(err.into())),
             };
 
-            let x =  prover_input(RootProvider::new_http(rpc_url.parse()?), block_number, BlockId::Number(BlockNumberOrTag::Number(checkpoint)));
-
-            todo!()
+            match benchmark_prover_input(RootProvider::new_http(provider_url), block_interval, checkpoint).await {
+                Ok(input) => Ok(input),
+                Err(err) => Err(FetchError::ZeroBinRpcFetchError(err))
+            }
         }
     }   
 }

@@ -22,7 +22,7 @@ alloy = { git = "https://github.com/alloy-rs/alloy", features = [
     "transports",
     "transport-http",
 ] }
-
+chrono = "0.4.38"
 
 # zk-evm dependencies
 plonky2 = "0.2.2"

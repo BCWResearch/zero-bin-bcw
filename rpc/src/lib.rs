@@ -1,3 +1,6 @@
+
+use std::time::{Duration, Instant};
+
 use alloy::primitives::B256;
 use alloy::rpc::types::eth::BlockNumberOrTag;
 use alloy::{
@@ -202,6 +205,68 @@ where
     Ok(ProverInput {
         blocks: block_proofs,
     })
+}
+
+/// Obtain the prover input for a given block interval
+pub async fn benchmark_prover_input<ProviderT, TransportT>(
+    mut provider: ProviderT,
+    block_interval: BlockInterval,
+    checkpoint_block_id: BlockId,
+) -> anyhow::Result<BenchmarkedProverInput>
+where
+    ProviderT: Provider<TransportT>,
+    TransportT: Transport + Clone,
+{
+    // Grab interval checkpoint block state trie
+    let checkpoint_state_trie_root = get_block(
+        &mut provider,
+        checkpoint_block_id,
+        BLOCK_WITH_FULL_TRANSACTIONS,
+    )
+    .await?
+    .header
+    .state_root;
+
+    let mut block_proofs = Vec::new();
+    let mut block_fetch_times = Vec::new();
+    let mut block_interval = block_interval.into_bounded_stream()?;
+
+    while let Some(block_num) = block_interval.next().await {
+        let block_id = BlockId::Number(BlockNumberOrTag::Number(block_num));
+        let start = Instant::now();
+        let block_prover_input =
+            block_prover_input(&provider, block_id, checkpoint_state_trie_root).await?;
+        block_proofs.push(block_prover_input);
+        block_fetch_times.push(start.elapsed())
+    }
+    Ok(BenchmarkedProverInput {
+        proverinput: ProverInput {
+            blocks: block_proofs
+        },
+        fetch_times: block_fetch_times,
+    })
+}
+
+pub struct BenchmarkedProverInput {
+    /// The blocks [BlockProverInput], stored just like [ProverInput]
+    pub proverinput: ProverInput,
+    /// Includes the [Duration] of how long it took to fetch the [BlockProverInput]
+    /// of the same index in self.blocks
+    pub fetch_times: Vec<Duration>,
+}
+
+impl From<BenchmarkedProverInput> for ProverInput {
+    fn from(value: BenchmarkedProverInput) -> Self {
+        value.proverinput
+    }
+}
+
+impl BenchmarkedProverInput {
+
+    /// Iterate with the fetch times
+    pub fn iter_with_fetch_times(&self) -> impl Iterator<Item=(&BlockProverInput, &Duration)> {
+        self.proverinput.blocks.iter().zip(self.fetch_times.iter())
+    }
 }
 
 trait Compat<Out> {

@@ -1,5 +1,6 @@
 use std::future::Future;
 use std::time::{Duration, Instant};
+use chrono::{DateTime, Utc};
 
 use alloy::primitives::U256;
 use anyhow::Result;
@@ -34,6 +35,13 @@ pub struct BenchmarkedGeneratedBlockProof {
     pub prep_dur: Option<Duration>,
     pub proof_dur: Option<Duration>,
     pub agg_dur: Option<Duration>,
+    pub total_dur: Option<Duration>,
+    pub n_txs: u64,
+    pub gas_used: u64,
+    pub gas_used_per_tx: Vec<u64>,
+    pub difficulty: u64,
+    pub start_time: DateTime<Utc>,
+    pub end_time: DateTime<Utc>,
 }
 
 impl From<BenchmarkedGeneratedBlockProof> for GeneratedBlockProof {
@@ -57,6 +65,7 @@ impl BlockProverInput {
     ) -> Result<BenchmarkedGeneratedBlockProof> {
         // Start timing for preparation
         let prep_start = Instant::now();
+        let start_time: DateTime<Utc> = Utc::now();
 
         // Basic preparation
         let block_number = self.get_block_number();
@@ -65,6 +74,11 @@ impl BlockProverInput {
             &ProcessingMeta::new(resolve_code_hash_fn),
             other_data.clone(),
         )?;
+
+        let n_txs = txs.len();
+        let gas_used = u64::try_from(other_data.b_data.b_meta.block_gas_used).expect("Overflow");
+        let gas_used_per_tx = txs.iter().map(|tx| u64::try_from(tx.gas_used_after - tx.gas_used_before).expect("Overflow of gas")).collect();
+        let difficulty = other_data.b_data.b_meta.block_difficulty;
 
         // Get time took to prepare
         let prep_dur = prep_start.elapsed();
@@ -118,12 +132,22 @@ impl BlockProverInput {
                 agg_dur.as_secs_f64()
             );
 
+            let end_time: DateTime<Utc> = Utc::now();
+
+
             // Return the block proof
             Ok(BenchmarkedGeneratedBlockProof {
                 proof: block_proof.0,
+                total_dur: Some(prep_start.elapsed()),
                 proof_dur: Some(proof_dur),
                 prep_dur: Some(prep_dur),
                 agg_dur: Some(agg_dur),
+                n_txs: n_txs as u64,
+                gas_used,
+                gas_used_per_tx,
+                difficulty: u64::try_from(difficulty).expect("Difficulty overflow"),
+                start_time,
+                end_time
             })
         } else {
             anyhow::bail!("AggProof is is not GeneratedAggProof")

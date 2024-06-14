@@ -1,8 +1,7 @@
 name: Repository Dispatch Workflow
 
 on:
-  repository_dispatch:
-    types: [custom-event]
+  workflow_dispatch:
 
 jobs:
   build:

@@ -2,6 +2,7 @@
 //! or sequential.
 
 use std::sync::Arc;
+use std::time::Instant;
 use chrono::{DateTime, Utc};
 use paladin::runtime::Runtime;
 use tokio::task::JoinError;
@@ -190,6 +191,18 @@ impl ManyProver {
             cumulative_n_txs += benchmark_block_proof.n_txs;
             cumulative_gas_used += benchmark_block_proof.gas_used;
 
+            let proof_out_time = match &self.proof_out {
+                Some(proof_out) => {
+                    let proof_out_instant = Instant::now();
+                    match proof_out.write(&benchmark_block_proof.proof) {
+                        Ok(_) => (),
+                        Err(err) => return Err(ManyProverError::ProofOutError(err)),
+                    }
+                    Some(proof_out_instant.elapsed())
+                },
+                None => None
+            };
+
             match &mut self.benchmark_out {
                 Some(benchmark_out) => {
                     benchmark_out.push(BenchmarkingStats {
@@ -199,7 +212,7 @@ impl ManyProver {
                         fetch_duration: *fetch_time,
                         total_proof_duration: benchmark_block_proof.total_dur.expect("Value is expected"),
                         prep_duration: benchmark_block_proof.prep_dur,
-                        proof_out_duration: None,
+                        proof_out_duration: proof_out_time,
                         agg_duration: benchmark_block_proof.agg_dur,
                         gas_used: benchmark_block_proof.gas_used,
                         gas_used_per_tx: benchmark_block_proof.gas_used_per_tx.clone(),
@@ -215,6 +228,17 @@ impl ManyProver {
             }
 
         }
+
+
+        match &self.benchmark_out {
+            Some(benchmark_out) => match benchmark_out.publish().await {
+                Ok(_) => (),
+                Err(err) => return Err(ManyProverError::BenchmarkingOutput(err)),
+            },
+            None => (),
+        }
+
+
 
         todo!();
         

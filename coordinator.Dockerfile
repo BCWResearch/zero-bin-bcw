@@ -44,6 +44,6 @@ RUN \
 RUN cargo build --verbose --release --bin coordinator
 
 FROM debian:bullseye-slim
-RUN apt-get update && apt-get install -y ca-certificates libjemalloc2
+RUN apt-get update && apt-get install -y ca-certificates libjemalloc2 make libssl-dev
 COPY --from=builder ./target/release/coordinator /usr/local/bin/coordinator
 CMD ["coordinator"]

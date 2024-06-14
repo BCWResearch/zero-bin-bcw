@@ -102,11 +102,7 @@ The example below proves blocks [1,10] using the RPC function listed in ZeroBin,
 ```json
 {
   "run_name": "run",
-  "start_block_number": 1,
-  "checkpoint_block_number": 1,
-  "terminate_on": {
-    "EndBlock": {"block_number": 10}
-  },
+  "block_interval": "3..=10",
   "block_source": {
     "ZeroBinRpc": {"rpc_url": "http://35.208.84.178:8545/"}
   },
@@ -122,10 +118,7 @@ The example below proves blocks [1,10] using the RPC function listed in ZeroBin,
 ```json
 {
   "run_name": "run",
-  "start_block_number": 18,
-  "terminate_on": {
-    "EndBlock": {"block_number": 21}
-  },
+  "block_interval": "3..=10",
   "block_source": {
     "ZeroBinRpc": {"rpc_url": "http://35.208.84.178:8545/"}
   },
@@ -140,11 +133,7 @@ An example not recording the proofs, and posting the results to a google cloud s
 ```json
 {
   "run_name": "run",
-  "start_block_number": 1,
-  "checkpoint_block_number": 1,
-  "terminate_on": {
-    "EndBlock": {"block_number": 10}
-  },
+  "block_interval": "3..=5",
   "block_source": {
     "ZeroBinRpc": {"rpc_url": "http://35.208.84.178:8545/"}
   },
@@ -158,11 +147,7 @@ In this example, we run the experiment for just one minute.
 
 ```json
 {
-  "start_block_number": 1,
-  "checkpoint_block_number": 1,
-  "terminate_on": {
-    "ElapsedSeconds": {"num_seconds": 60}
-  },
+  "block_interval": "3..=5",
   "block_source": {
     "ZeroBinRpc": {"rpc_url": "http://35.208.84.178:8545/"}
   },
@@ -174,17 +159,10 @@ In this example, we run the experiment for just one minute.
 
 ```json
 {
-  "start_block_number": 1,
-  "checkpoint_block_number": 1,
-  "terminate_on": {
-    "BlockGasUsed": {"until_gas_sum": 30000000}
-  },
+  "block_interval": "3..=5",
   "block_source": {
     "ZeroBinRpc": {"rpc_url": "http://35.208.84.178:8545/"}
   },
-  "block_concurrency": {
-    "Parallel": {"max_concurrent": 2}
-    },
   "benchmark_output": {
     "GoogleCloudStorageCsv": {"file_name": "test.csv", "bucket": "zkevm-csv"}
   }
@@ -193,17 +171,10 @@ In this example, we run the experiment for just one minute.
 
 ```json
 {
-  "start_block_number": 1,
-  "checkpoint_block_number": 1,
-  "terminate_on": {
-    "ElapsedSeconds": {"num_seconds": 60}
-  },
+  "block_interval": "3..=5",
   "block_source": {
     "ZeroBinRpc": {"rpc_url": "http://35.208.84.178:8545/"}
   },
-  "block_concurrency": {
-    "Parallel": {"max_concurrent": 5}
-    },
   "benchmark_output": {
     "GoogleCloudStorageCsv": {"file_name": "2hr_parallel.csv", "bucket": "zkevm-csv"}
   }

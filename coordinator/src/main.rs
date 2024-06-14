@@ -202,15 +202,13 @@ async fn handle_post(
     };
 
     // Start the prover in a new thread
-    tokio::spawn(async move {
-        match prover.prove_blocks().await {
-            Ok(_) => info!("Completed request started (Request: {})", start_time),
-            Err(err) => error!(
-                "Critical error occured while attempting to perform proofs ({}): {}",
-                start_time, err
-            ),
-        }
-    });
+    match prover.prove_blocks().await {
+        Ok(_) => info!("Completed request started (Request: {})", start_time),
+        Err(err) => error!(
+            "Critical error occured while attempting to perform proofs ({}): {}",
+            start_time, err
+        ),
+    };
 
     // Respond the Accepted response
     HttpResponse::Accepted()

@@ -1,4 +1,5 @@
 //! This module contains a lot of the important input structs
+use common::block_interval::BlockInterval;
 use serde::{Deserialize, Serialize};
 
 use crate::{benchmarking::BenchmarkOutputConfig, fetch::Checkpoint};
@@ -92,21 +93,17 @@ use crate::proofout::ProofOutputMethod;
 pub struct ProveBlocksInput {
     /// The name of the run
     pub run_name: Option<String>,
-    /// The starting block number
-    pub start_block_number: u64,
+    /// The block interval
+    ///
+    /// See [BlockInterval::new] to see the acceptable [String] representations
+    /// for the [BlockInterval]
+    pub block_interval: String,
     /// The checkpoint block number.  If not provided, will be the
     /// the block before the current block number, or
     /// [Checkpoint::BlockNumberNegativeOffset] set to 1.
     pub checkpoint: Option<Checkpoint>,
-    /// The termination condition.  If not provided, will not terminate until
-    /// exhausted or an error occurs.
-    pub terminate_on: Option<TerminateOn>,
     /// How we source the blocks.
     pub block_source: BlockSource,
-    /// The conccurency mode
-    pub block_concurrency: Option<BlockConcurrencyMode>,
-    /// DEPRECATED
-    pub check_gas: Option<bool>,
     /// Stores the output of the proofs. If not provided, no proofs will be
     /// stored
     pub proof_output: Option<ProofOutputMethod>,
@@ -120,11 +117,17 @@ pub struct ProveBlocksInput {
 }
 
 impl ProveBlocksInput {
+    pub fn get_block_interval(&self) -> Result<BlockInterval, anyhow::Error> {
+        BlockInterval::new(&self.block_interval)
+    }
+
     pub fn get_expected_number_proofs(&self) -> Option<u64> {
-        match self.terminate_on {
-            Some(TerminateOn::EndBlock { block_number }) => {
-                Some((block_number - self.start_block_number) + 1)
-            }
+        match self.get_block_interval() {
+            // Ranges should be determined by start and end
+            Ok(BlockInterval::Range(range)) => Some(range.end - range.start),
+            // Single block should be 1
+            Ok(BlockInterval::SingleBlockId(_)) => Some(1),
+            // Nothing, then None
             _ => None,
         }
     }

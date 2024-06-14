@@ -17,3 +17,6 @@ verifier_state_*
 # Coordinator output
 coordinator/benchmark_out/
 coordinator/proof_out/
+
+# Ignore IntelliJ IDEA/RustRover/Clion metadata
+.idea/

@@ -3,6 +3,7 @@
 
 use std::sync::Arc;
 use std::time::Instant;
+
 use chrono::{DateTime, Utc};
 use paladin::runtime::Runtime;
 use tokio::task::JoinError;
@@ -164,12 +165,13 @@ impl ManyProver {
     //===========================================================================================
 
     pub async fn prove_blocks(&mut self) -> Result<(), ManyProverError> {
-
         info!("Startng to prove blocks");
 
         info!("Starting fetch");
         let prover_input = fetch(
-            self.input_request.get_block_interval().map_err(FetchError::ZeroBinRpcFetchError)?,
+            self.input_request
+                .get_block_interval()
+                .map_err(FetchError::ZeroBinRpcFetchError)?,
             &self.input_request.checkpoint,
             &self.input_request.block_source,
         )
@@ -178,16 +180,22 @@ impl ManyProver {
 
         info!("Starting proofs");
         let block_proof_start_time: DateTime<Utc> = Utc::now();
-        let block_proofs = match prover_input.proverinput.prove_and_benchmark(&self.runtime, None, true).await {
+        let block_proofs = match prover_input
+            .proverinput
+            .prove_and_benchmark(&self.runtime, None, true)
+            .await
+        {
             Ok(block_proofs) => block_proofs,
-            Err(err) => return Err(ManyProverError::Proof(err))
+            Err(err) => return Err(ManyProverError::Proof(err)),
         };
         info!("Finalized benchmarked proofs");
 
         let mut cumulative_n_txs: u64 = 0;
         let mut cumulative_gas_used: u64 = 0;
 
-        for (benchmark_block_proof, fetch_time) in block_proofs.iter().zip(prover_input.fetch_times.iter()) {
+        for (benchmark_block_proof, fetch_time) in
+            block_proofs.iter().zip(prover_input.fetch_times.iter())
+        {
             cumulative_n_txs += benchmark_block_proof.n_txs;
             cumulative_gas_used += benchmark_block_proof.gas_used;
 
@@ -199,36 +207,37 @@ impl ManyProver {
                         Err(err) => return Err(ManyProverError::ProofOutError(err)),
                     }
                     Some(proof_out_instant.elapsed())
-                },
-                None => None
+                }
+                None => None,
             };
 
             match &mut self.benchmark_out {
-                Some(benchmark_out) => {
-                    benchmark_out.push(BenchmarkingStats {
-                        block_number: benchmark_block_proof.proof.b_height,
-                        n_txs: benchmark_block_proof.n_txs,
-                        cumulative_n_txs: Some(cumulative_n_txs),
-                        fetch_duration: *fetch_time,
-                        total_proof_duration: benchmark_block_proof.total_dur.expect("Value is expected"),
-                        prep_duration: benchmark_block_proof.prep_dur,
-                        proof_out_duration: proof_out_time,
-                        agg_duration: benchmark_block_proof.agg_dur,
-                        gas_used: benchmark_block_proof.gas_used,
-                        gas_used_per_tx: benchmark_block_proof.gas_used_per_tx.clone(),
-                        txproof_duration: benchmark_block_proof.proof_dur,
-                        start_time: benchmark_block_proof.start_time,
-                        end_time: benchmark_block_proof.end_time,
-                        difficulty: benchmark_block_proof.difficulty,
-                        cumulative_gas_used: Some(cumulative_gas_used),
-                        overall_elapsed_seconds: Some((benchmark_block_proof.end_time - block_proof_start_time).num_seconds() as u64) ,
-                    })
-                },
+                Some(benchmark_out) => benchmark_out.push(BenchmarkingStats {
+                    block_number: benchmark_block_proof.proof.b_height,
+                    n_txs: benchmark_block_proof.n_txs,
+                    cumulative_n_txs: Some(cumulative_n_txs),
+                    fetch_duration: *fetch_time,
+                    total_proof_duration: benchmark_block_proof
+                        .total_dur
+                        .expect("Value is expected"),
+                    prep_duration: benchmark_block_proof.prep_dur,
+                    proof_out_duration: proof_out_time,
+                    agg_duration: benchmark_block_proof.agg_dur,
+                    gas_used: benchmark_block_proof.gas_used,
+                    gas_used_per_tx: benchmark_block_proof.gas_used_per_tx.clone(),
+                    txproof_duration: benchmark_block_proof.proof_dur,
+                    start_time: benchmark_block_proof.start_time,
+                    end_time: benchmark_block_proof.end_time,
+                    difficulty: benchmark_block_proof.difficulty,
+                    cumulative_gas_used: Some(cumulative_gas_used),
+                    overall_elapsed_seconds: Some(
+                        (benchmark_block_proof.end_time - block_proof_start_time).num_seconds()
+                            as u64,
+                    ),
+                }),
                 None => todo!(),
             }
-
         }
-
 
         match &self.benchmark_out {
             Some(benchmark_out) => match benchmark_out.publish().await {
@@ -239,6 +248,5 @@ impl ManyProver {
         }
 
         Ok(())
-        
     }
 }

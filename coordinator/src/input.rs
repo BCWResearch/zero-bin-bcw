@@ -94,7 +94,7 @@ pub struct ProveBlocksInput {
     /// The name of the run
     pub run_name: Option<String>,
     /// The block interval
-    /// 
+    ///
     /// See [BlockInterval::new] to see the acceptable [String] representations
     /// for the [BlockInterval]
     pub block_interval: String,
@@ -117,7 +117,6 @@ pub struct ProveBlocksInput {
 }
 
 impl ProveBlocksInput {
-
     pub fn get_block_interval(&self) -> Result<BlockInterval, anyhow::Error> {
         BlockInterval::new(&self.block_interval)
     }

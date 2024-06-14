@@ -1,9 +1,9 @@
 use std::future::Future;
 use std::time::{Duration, Instant};
-use chrono::{DateTime, Utc};
 
 use alloy::primitives::U256;
 use anyhow::Result;
+use chrono::{DateTime, Utc};
 use futures::{future::BoxFuture, stream::FuturesOrdered, FutureExt, TryFutureExt, TryStreamExt};
 use num_traits::ToPrimitive as _;
 use ops::TxProof;
@@ -77,7 +77,12 @@ impl BlockProverInput {
 
         let n_txs = txs.len();
         let gas_used = u64::try_from(other_data.b_data.b_meta.block_gas_used).expect("Overflow");
-        let gas_used_per_tx = txs.iter().map(|tx| u64::try_from(tx.gas_used_after - tx.gas_used_before).expect("Overflow of gas")).collect();
+        let gas_used_per_tx = txs
+            .iter()
+            .map(|tx| {
+                u64::try_from(tx.gas_used_after - tx.gas_used_before).expect("Overflow of gas")
+            })
+            .collect();
         let difficulty = other_data.b_data.b_meta.block_difficulty;
 
         // Get time took to prepare
@@ -134,7 +139,6 @@ impl BlockProverInput {
 
             let end_time: DateTime<Utc> = Utc::now();
 
-
             // Return the block proof
             Ok(BenchmarkedGeneratedBlockProof {
                 proof: block_proof.0,
@@ -147,7 +151,7 @@ impl BlockProverInput {
                 gas_used_per_tx,
                 difficulty: u64::try_from(difficulty).expect("Difficulty overflow"),
                 start_time,
-                end_time
+                end_time,
             })
         } else {
             anyhow::bail!("AggProof is is not GeneratedAggProof")

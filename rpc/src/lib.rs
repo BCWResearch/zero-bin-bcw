@@ -1,4 +1,3 @@
-
 use std::time::{Duration, Instant};
 
 use alloy::primitives::B256;
@@ -241,7 +240,7 @@ where
     }
     Ok(BenchmarkedProverInput {
         proverinput: ProverInput {
-            blocks: block_proofs
+            blocks: block_proofs,
         },
         fetch_times: block_fetch_times,
     })
@@ -250,8 +249,8 @@ where
 pub struct BenchmarkedProverInput {
     /// The blocks [BlockProverInput], stored just like [ProverInput]
     pub proverinput: ProverInput,
-    /// Includes the [Duration] of how long it took to fetch the [BlockProverInput]
-    /// of the same index in self.blocks
+    /// Includes the [Duration] of how long it took to fetch the
+    /// [BlockProverInput] of the same index in self.blocks
     pub fetch_times: Vec<Duration>,
 }
 
@@ -262,9 +261,8 @@ impl From<BenchmarkedProverInput> for ProverInput {
 }
 
 impl BenchmarkedProverInput {
-
     /// Iterate with the fetch times
-    pub fn iter_with_fetch_times(&self) -> impl Iterator<Item=(&BlockProverInput, &Duration)> {
+    pub fn iter_with_fetch_times(&self) -> impl Iterator<Item = (&BlockProverInput, &Duration)> {
         self.proverinput.blocks.iter().zip(self.fetch_times.iter())
     }
 }

@@ -1,5 +1,8 @@
 //! This is useful for fetching [ProverInput] per block
-use alloy::{providers::RootProvider, rpc::types::{BlockId, BlockNumberOrTag}};
+use alloy::{
+    providers::RootProvider,
+    rpc::types::{BlockId, BlockNumberOrTag},
+};
 use anyhow::Error;
 use common::block_interval::BlockInterval;
 use rpc::{benchmark_prover_input, BenchmarkedProverInput};
@@ -40,21 +43,31 @@ impl Default for Checkpoint {
 }
 
 impl Checkpoint {
-
     pub fn get_checkpoint_from_blocknum(&self, block_number: u64) -> BlockId {
         match self {
             Self::Constant(num @ BlockId::Number(_)) => *num,
-            Self::Constant(BlockId::Hash(_)) => unreachable!("Coordinator does not support Hash Block IDs"),
-            Self::BlockNumberNegativeOffset(offset) => BlockId::Number(BlockNumberOrTag::Number(block_number - *offset))
+            Self::Constant(BlockId::Hash(_)) => {
+                unreachable!("Coordinator does not support Hash Block IDs")
+            }
+            Self::BlockNumberNegativeOffset(offset) => {
+                BlockId::Number(BlockNumberOrTag::Number(block_number - *offset))
+            }
         }
     }
 
     pub fn get_checkpoint_from_interval(&self, block_interval: BlockInterval) -> BlockId {
         match block_interval {
-            BlockInterval::FollowFrom { start_block, block_time: _ } => self.get_checkpoint_from_blocknum(start_block),
+            BlockInterval::FollowFrom {
+                start_block,
+                block_time: _,
+            } => self.get_checkpoint_from_blocknum(start_block),
             BlockInterval::Range(range) => self.get_checkpoint_from_blocknum(range.start),
-            BlockInterval::SingleBlockId(BlockId::Number(BlockNumberOrTag::Number(start))) => self.get_checkpoint_from_blocknum(start),
-            BlockInterval::SingleBlockId(BlockId::Number(_) | BlockId::Hash(_)) => todo!("Coordinator only supports Numbers, not Tags or Block Hashes"),
+            BlockInterval::SingleBlockId(BlockId::Number(BlockNumberOrTag::Number(start))) => {
+                self.get_checkpoint_from_blocknum(start)
+            }
+            BlockInterval::SingleBlockId(BlockId::Number(_) | BlockId::Hash(_)) => {
+                todo!("Coordinator only supports Numbers, not Tags or Block Hashes")
+            }
         }
     }
 }
@@ -73,17 +86,25 @@ pub async fn fetch(
                 block_interval, rpc_url
             );
 
-            let checkpoint = checkpoint_method.unwrap_or_default().get_checkpoint_from_interval(block_interval.clone());
+            let checkpoint = checkpoint_method
+                .unwrap_or_default()
+                .get_checkpoint_from_interval(block_interval.clone());
 
             let provider_url = match url::Url::parse(rpc_url) {
                 Ok(url) => url,
                 Err(err) => return Err(FetchError::ZeroBinRpcFetchError(err.into())),
             };
 
-            match benchmark_prover_input(RootProvider::new_http(provider_url), block_interval, checkpoint).await {
+            match benchmark_prover_input(
+                RootProvider::new_http(provider_url),
+                block_interval,
+                checkpoint,
+            )
+            .await
+            {
                 Ok(input) => Ok(input),
-                Err(err) => Err(FetchError::ZeroBinRpcFetchError(err))
+                Err(err) => Err(FetchError::ZeroBinRpcFetchError(err)),
             }
         }
-    }   
+    }
 }

@@ -128,7 +128,7 @@ jobs:
       id-token: 'write'
     # needs: deploy
     steps:
-      - name: Checkout sources
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud
@@ -139,17 +139,19 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_ID }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: Get GKE credentials
-        id: 'get-credentials'
-        uses: 'google-github-actions/get-gke-credentials@v2'
-        with:
-          cluster_name: 'immutable-prod'
-          location: 'us-central1'
-      
-      - name: Run tests
-        run: |-
-          chmod +x tools/run-benchmark.sh
-          ./tools/run-tests.sh
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
 
+
+      - name: Run benchmark script
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_WORKLOAD_IDENTITY_ID: ${{ secrets.GCP_WORKLOAD_IDENTITY_ID }}
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+        run: |
+          pwd
+          ls  -al tools
+          chmod +x tools/run-benchmark.sh
+          ./tools/run-benchmark.sh
 
 

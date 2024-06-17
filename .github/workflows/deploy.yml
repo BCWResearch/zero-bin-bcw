@@ -123,6 +123,9 @@ jobs:
   test:
     name: Run benchmarks tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     # needs: deploy
     steps:
       - name: Checkout sources

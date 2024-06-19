@@ -1,40 +1,51 @@
 # expects GCS_UPLOAD_PATH environment variable
-# optional LLVM_PROFILE_FILE environment variable
+# optional WORKER_RELATIVE_PATH environment variable
+#   - if this one is not set, it will assume: `./target/x86_64-unknown-linux-gnu/release/worker`
+# optional PROFILE_DIRECTORY environment variable
 #   - if this one is not set, it will assume: `./target/pgo-profiles/`
 
 import signal
+import subprocess
 import sys
 import os
+import time
 from google.cloud import storage
 
 
 GCS_UPLOAD_BUCKET = os.environ.get("GCS_UPLOAD_BUCKET")
 assert(GCS_UPLOAD_BUCKET is not None)
 
-LLVM_PROFILE_DIRECTORY = os.environ.get("LLVM_PROFILE_DIRECTORY")
-if LLVM_PROFILE_DIRECTORY is None:
-    LLVM_PROFILE_DIRECTORY = "./target/pgo-profiles/"
+WORKER_PATH = os.environ.get("WORKER_PATH")
+if WORKER_PATH is None:
+    WORKER_PATH = "./target/x86_64-unknown-linux-gnu/release/worker"
+
+PROFILE_DIRECTORY = os.environ.get("PROFILE_DIRECTORY")
+if PROFILE_DIRECTORY is None:
+    PROFILE_DIRECTORY = "./target/pgo-profiles/"
 
 
 def signal_handler(sig, frame):
     ''' for handling interrupts (currently SIGINT and SIGTERM) '''
     if sig == signal.SIGINT:
         print('Interrupted by user (SIGINT)')
-
+        process.send_signal(signal.SIGINT)
+        cleanup_pgo_run()
     elif sig == signal.SIGTERM:
         print('Termination signal received (SIGTERM)')
+        process.send_signal(signal.SIGTERM)
+        cleanup_pgo_run()
     else:
-        print("Received an unexpected signal. Ignoring...")
+        print("Ignoring an unexpected signal:", sig)
         return
-    #assert(indexing_range_serialized is not None)
-    #future = publisher.publish(topic=STATEFUL_RESUMPTION_TOPIC_PATH, data=indexing_range_serialized)
-    #print(future.result())
-    sys.exit(0)
+
+# -------------------------
+# | run the worker binary |
+# -------------------------
+process = subprocess.Popen(WORKER_PATH)
 
 # register the signal handlers
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
-
 
 
 # upload the pgo file to the gcs bucket
@@ -49,25 +60,24 @@ def upload_pgo_file_to_gcs(file_path):
     blob = bucket.blob(file_name)
     blob.upload_from_filename(file_path)
 
-# TODO: run the worker binary:
+def cleanup_pgo_run():
+    # continually checks if the PGO file has been generated before uploading to GCS
+    files = os.listdir(PROFILE_DIRECTORY)
+    while len(files) < 1:
+        time.sleep(1)
+        files = os.listdir(PROFILE_DIRECTORY)
 
-
-
-
-# check that there is exactly 1 .profraw file exists at the path specified in `LLVM_PROFILE_FILE`,
-#   then upload it to GCS
-files = os.listdir(LLVM_PROFILE_DIRECTORY)
-if len(files) != 1:
-    print("FATAL: more or less than 1 file in the profiling directory:", files)
-    print("The profiling directory is:", LLVM_PROFILE_DIRECTORY)
-    print("Exiting...")
-    sys.exit(1)
-else:
-    pgo_file = files[0]
-    if pgo_file.endswith(".profraw"):
-        upload_pgo_file_to_gcs(pgo_file)
-    else:
-        print("FATAL: unexpected file type in the profiling directory:", pgo_file)
-        print("The profiling directory is:", LLVM_PROFILE_DIRECTORY)
+    if len(files) > 1:
+        print("FATAL: more than 1 file in the profiling directory:", files)
+        print("The profiling directory is:", PROFILE_DIRECTORY)
         print("Exiting...")
         sys.exit(1)
+    else:
+        pgo_file = files[0]
+        if pgo_file.endswith(".profraw"):
+            upload_pgo_file_to_gcs(pgo_file)
+        else:
+            print("FATAL: unexpected file extension (should be .profraw) in the profiling directory. File is:", pgo_file)
+            print("The profiling directory is:", PROFILE_DIRECTORY)
+            print("Exiting...")
+            sys.exit(1)

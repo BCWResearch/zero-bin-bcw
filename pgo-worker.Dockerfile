@@ -6,7 +6,7 @@
 FROM rustlang/rust:nightly-bullseye-slim@sha256:2be4bacfc86e0ec62dfa287949ceb47f9b6d9055536769bdee87b7c1788077a9 as builder
 
 # Install jemalloc
-RUN apt-get update && apt-get install -y libjemalloc2 libjemalloc-dev make clang-16
+RUN apt-get update && apt-get install -y ca-certificates libjemalloc2 libjemalloc-dev make clang-16
 
 # Install cargo-pgo, used for building a binary with profiling enabled
 RUN cargo install cargo-pgo
@@ -43,6 +43,7 @@ RUN cargo pgo build -- --bin worker
 #FROM debian:bullseye-slim
 #RUN apt-get update && apt-get install -y ca-certificates libjemalloc2
 #COPY --from=builder ./target/x86_64-unknown-linux-gnu/release/worker /usr/local/bin/worker
+#COPY pgo_worker_wrapper.py /usr/local/bin/pgo_worker_wrapper.py
 
 # Install python3 and pip for the wrapper script
 RUN apt-get install -y python3 python3-pip
@@ -50,15 +51,13 @@ RUN apt-get install -y python3 python3-pip
 # Install the google-cloud-storage dependency for the wrapper script
 RUN pip3 install google-cloud-storage
 
-#COPY pgo_worker_wrapper.py /usr/local/bin/pgo_worker_wrapper.py
-
-# NOTE: the bucket name should be set WITHOUT the `gcs://` prefix
+# NOTE: the bucket name should be set WITHOUT the `gs://` prefix
 #  BONUS NOTE: should we create a different bucket just for .profraw files?
 ENV GCS_UPLOAD_BUCKET=zkevm-csv
 ENV WORKER_PATH=./target/x86_64-unknown-linux-gnu/release/worker
 ENV PROFILE_DIRECTORY=./target/pgo-profiles/
 # run the python wrapper, which will:
 #   1. execute the pgo-worker binary
-#   2. wait to receive a signal (either SIGTERM or SIGKILL), then pass that along to the pgo-worker binary
+#   2. wait to receive a signal (either SIGTERM or SIGKILL), then sends a SIGTERM to the pgo-worker binary
 #   3. upload the created pgo .profraw file to GCS
 CMD ["python3", "pgo_worker_wrapper.py"]

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if the correct number of arguments are provided
+if [ "$#" -ne 10 ]; then
+  echo "Usage: $0 <machine_type> <num_workers> <cpu_request> <cpu_limit> <memory_request> <memory_limit> <block_start> <block_end> <other_args> <rpc_endpoint>"
+  exit 1
+fi
+
 # CONSTANTS
 CLUSTER_NAME="immutable-prod"
 NODE_POOL_NAME="immutable-prod-zk"
@@ -12,22 +18,22 @@ REGION="us-central1"
 ZONE="us-central1-a"
 W_DEPLOYMENT_LABEL="app.kubernetes.io/component=worker"
 L_DEPLOYMENT_LABEL="app.kubernetes.io/component=leader"
-RPC_ENDPOINT="http://35.208.84.178:8545"
 LEADER_ENDPOINT="http://35.238.105.189:8080"
 LOG_STRING_TO_WATCH_FOR="Finalized benchmarked proofs"
 CPU_THRESHOLD=100
 DISK_TYPE=""
 
 # parameters
-machine_type="t2d-standard-60"
-num_workers=100
-cpu_request="11"
-memory_request="32Gi"
-cpu_limit="11"
-memory_limit="32Gi"
-block_start=101368
-block_end=101466
-other_args="test.using.script" # will be appended to the csv file name
+machine_type=$1
+num_workers=$2
+cpu_request=$3
+cpu_limit=$4
+memory_request=$5
+memory_limit=$6
+block_start=$7
+block_end=$8
+other_args=$9 # will be appended to the csv file name
+RPC_ENDPOINT=${10}
 
 
 if [[ "$machine_type" == *"n4"* ]]; then

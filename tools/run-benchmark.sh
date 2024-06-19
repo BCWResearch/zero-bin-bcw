@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e 
+set -o pipefail
 
 # Check if the correct number of arguments are provided
 if [ "$#" -ne 10 ]; then

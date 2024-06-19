@@ -3,31 +3,31 @@ name: Run benchmark test
 on:
   workflow_dispatch:
     inputs:
-      machine-type:
+      machine_type:
         description: 'The GCE machine type'
         default: 't2d-standard-60'
         type: string
-      num-workers:
+      num_workers:
         description: 'Number of zero-bin workers'
         default: '100'
         required: true
         type: string
-      cpu-request:
+      cpu_request:
         description: 'The CPU request set for the workers'
         default: '11'
         required: true
         type: string
-      cpu-limit:
+      cpu_limit:
         description: 'The CPU limit set for the workers'
         default: '11'
         required: true
         type: string
-      memory-request:
+      memory_request:
         description: 'The memory request set for the workers'
         default: '32Gi'
         required: false
         type: string
-      memory-limit:
+      memory_limit:
         description: 'The memory limit set for the workers'
         default: '32Gi'
         required: false
@@ -38,6 +38,10 @@ on:
         type: string
       block_end:
         description: 'The block number to end the range of blocks to prove. (Set to the same value as block_start to only prove 1 block)'
+        required: true
+        type: string
+      other_args:
+        description: 'Other text to append into the generated CSV file'
         required: true
         type: string
       rpc_endpoint:
@@ -81,4 +85,4 @@ jobs:
           GCP_WORKLOAD_IDENTITY_ID: ${{ secrets.GCP_WORKLOAD_IDENTITY_ID }}
           GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
         run: >
-          ./tools/run-benchmark.sh ${{ inputs.machine-type }} ${{ inputs.num-workers }} ${{ inputs.cpu-request }} ${{ inputs.cpu-limit }} ${{ inputs.memory-request }} ${{ inputs.memory-limit }} ${{ inputs.block-start }} ${{ inputs.block-end }} ${{ inputs.rpc-endpoint }}
+          ./tools/run-benchmark.sh ${{ inputs.machine_type }} ${{ inputs.num_workers }} ${{ inputs.cpu_request }} ${{ inputs.cpu_limit }} ${{ inputs.memory_request }} ${{ inputs.memory_limit }} ${{ inputs.block_start }} ${{ inputs.block_end }} ${{ inputs.other_args }} ${{ inputs.rpc_endpoint }}

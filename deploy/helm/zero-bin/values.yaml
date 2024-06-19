@@ -92,13 +92,13 @@ hull:
           #     operator: "Equal"
           #     value: "zk"
           #     effect: "NoSchedule"
-      worker:
+      pgo-worker:
         replicas: 1
         pod:
           containers:
             worker:
               image:
-                repository: us.gcr.io/immutable-418115/zero-bin-worker
+                repository: us.gcr.io/immutable-418115/zero-bin-pgo-worker
                 tag: _HT*hull.config.specific.version
               imagePullPolicy: Always
               env:

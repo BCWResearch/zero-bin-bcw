@@ -68,7 +68,7 @@ jobs:
           tags: ${{ steps.worker-meta.outputs.tags }}
           labels: ${{ steps.worker-meta.outputs.labels }}
           # cache-from: type=gha
-          # cache-to: type=gha,mode=min
+          # cache-to: type=gha,mode=max
 
       - name: Build and push leader
         uses: docker/build-push-action@v5
@@ -79,7 +79,7 @@ jobs:
           tags: ${{ steps.leader-meta.outputs.tags }}
           labels: ${{ steps.leader-meta.outputs.labels }}
           # cache-from: type=gha
-          # cache-to: type=gha,mode=min
+          # cache-to: type=gha,mode=max
 
   deploy:
     name: Deploy to GKE
@@ -119,3 +119,5 @@ jobs:
           pwd && ls -lh
           cd ./deploy/helm
           helm upgrade zero-bin ./zero-bin -f ./zero-bin/values.yaml --set hull.config.specific.version=sha-${GITHUB_SHA} -n zkevm --install
+
+

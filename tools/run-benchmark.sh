@@ -24,6 +24,10 @@ LEADER_ENDPOINT="http://35.238.105.189:8080"
 LOG_STRING_TO_WATCH_FOR="Finalized benchmarked proofs"
 CPU_THRESHOLD=100
 DISK_TYPE=""
+NUM_WORKERS_LIMIT=200
+IMX_RPC="http://35.208.84.178:8545"
+INTERNAL_RPC="http://35.208.68.173:8545"
+RPC_ADDRESS=""
 
 # parameters
 machine_type=$1
@@ -37,16 +41,40 @@ block_end=$8
 other_args=$9 # will be appended to the csv file name
 RPC_ENDPOINT=${10}
 
+######################
+# Do some validation #
+######################
+if [[ "$num_workers" -gt $NUM_WORKERS_LIMIT ]]; then
+  echo "error: Num workers can't be greater than ${NUM_WORKERS_LIMIT}" >&2
+  exit 1
+fi
+
+re='^[0-9]+$'
+if ! [[ $block_start =~ $re ]] ; then
+   echo "error: Block start must be a number" >&2; exit 1
+fi
+
+if ! [[ $block_end =~ $re ]] ; then
+   echo "error: Block end must be a number" >&2; exit 1
+fi
+
+if [[ $RPC_ENDPOINT == "IMX_RPC" ]]; then
+  RPC_ADDRESS=$IMX_RPC
+elif [[ $RPC_ENDPOINT == "INTERNAL_RPC" ]]; then
+  RPC_ADDRESS=$INTERNAL_RPC
+else
+  echo "error: Wrong RPC endpoint" >&2; exit 1
+fi
+
+########################
+# Update GKE node pool #
+########################
 
 if [[ "$machine_type" == *"n4"* ]]; then
   DISK_TYPE="hyperdisk-balanced"
 else
   DISK_TYPE="pd-ssd"
 fi
-
-########################
-# Update GKE node pool #
-########################
 
 gcloud container node-pools update $NODE_POOL_NAME --cluster=$CLUSTER_NAME --machine-type=$machine_type --disk-type=$DISK_TYPE --region=$REGION
 
@@ -156,7 +184,7 @@ done
 
 # Build out the request parameters
 csv_file_name=$(printf "%s.%s.%s.%s.%scpu.%sworkers.sequential.%s.csv" "$block_start" "$block_end" "$machine_type" "$CPU_PLATFORM" "$cpu_request" "$num_workers" "$other_args")
-post_body=$(printf '{"block_interval":"%s..=%s","block_source":{"ZeroBinRpc":{"rpc_url":"%s"}},"benchmark_output":{"GoogleCloudStorageCsv":{"file_name":"%s","bucket":"zkevm-csv"}}}' "$block_start" "$block_end" "$RPC_ENDPOINT" "$csv_file_name")
+post_body=$(printf '{"block_interval":"%s..=%s","block_source":{"ZeroBinRpc":{"rpc_url":"%s"}},"benchmark_output":{"GoogleCloudStorageCsv":{"file_name":"%s","bucket":"zkevm-csv"}}}' "$block_start" "$block_end" "$RPC_ADDRESS" "$csv_file_name")
 
 # Run the benchmark test
 echo "Triggering benchmark test..."

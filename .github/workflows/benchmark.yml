@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       machine_type:
-        description: 'The GCE machine type'
+        description: 'The GCE machine type. (See docs for complete list of machine types https://cloud.google.com/compute/docs/general-purpose-machines)'
         default: 't2d-standard-60'
         type: string
       num_workers:
@@ -22,13 +22,8 @@ on:
         default: '11'
         required: true
         type: string
-      memory_request:
-        description: 'The memory request set for the workers'
-        default: '32Gi'
-        required: false
-        type: string
-      memory_limit:
-        description: 'The memory limit set for the workers'
+      memory:
+        description: 'The memory set for the workers'
         default: '32Gi'
         required: false
         type: string
@@ -47,8 +42,11 @@ on:
       rpc_endpoint:
         description: 'The RPC endpoint zero-bin will use'
         required: false
-        default: 'http://35.208.84.178:8545'
-        type: string
+        default: 'IMX_RPC'
+        type: choice
+        options:
+         - IMX_RPC
+         - INTERNAL_RPC
 
 jobs:
   test:
@@ -85,4 +83,4 @@ jobs:
           GCP_WORKLOAD_IDENTITY_ID: ${{ secrets.GCP_WORKLOAD_IDENTITY_ID }}
           GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
         run: >
-          ./tools/run-benchmark.sh ${{ inputs.machine_type }} ${{ inputs.num_workers }} ${{ inputs.cpu_request }} ${{ inputs.cpu_limit }} ${{ inputs.memory_request }} ${{ inputs.memory_limit }} ${{ inputs.block_start }} ${{ inputs.block_end }} ${{ inputs.other_args }} ${{ inputs.rpc_endpoint }}
+          ./tools/run-benchmark.sh ${{ inputs.machine_type }} ${{ inputs.num_workers }} ${{ inputs.cpu_request }} ${{ inputs.cpu_limit }} ${{ inputs.memory }} ${{ inputs.memory }} ${{ inputs.block_start }} ${{ inputs.block_end }} ${{ inputs.other_args }} ${{ inputs.rpc_endpoint }}

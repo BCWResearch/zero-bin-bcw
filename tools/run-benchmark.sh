@@ -22,7 +22,7 @@ W_DEPLOYMENT_LABEL="app.kubernetes.io/component=worker"
 L_DEPLOYMENT_LABEL="app.kubernetes.io/component=leader"
 LEADER_ENDPOINT="http://35.238.105.189:8080"
 LOG_STRING_TO_WATCH_FOR="Finalized benchmarked proofs"
-CPU_THRESHOLD=100
+CPU_THRESHOLD="${CPU_THRESHOLD:-100}"
 DISK_TYPE=""
 NUM_WORKERS_LIMIT=200
 IMX_RPC="http://35.208.84.178:8545"

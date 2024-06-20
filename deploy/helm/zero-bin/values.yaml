@@ -142,6 +142,7 @@ hull:
                     operator: In
                     values:
                     - zk
+          terminationGracePeriodSeconds: 300
           tolerations:
             - key: "workload"
               operator: "Equal"

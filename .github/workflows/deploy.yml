@@ -147,7 +147,7 @@ jobs:
           GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           MACHINE_TYPE: "t2d-standard-60"
           NUM_WORKERS: 1
-          CPU: 11
+          CPU: 55
           MEMORY: 32Gi
           BLOCK_START: 10
           BLOCK_END: 12

@@ -16,6 +16,8 @@ RUN \
     mkdir -p ops/src     && touch ops/src/lib.rs && \
     mkdir -p worker/src  && echo "fn main() {println!(\"YO!\");}" > worker/src/main.rs
 
+COPY pgo_worker_wrapper.py ./pgo_worker_wrapper.py
+
 COPY Cargo.toml .
 RUN sed -i "2s/.*/members = [\"common\", \"ops\", \"worker\"]/" Cargo.toml
 COPY Cargo.lock .

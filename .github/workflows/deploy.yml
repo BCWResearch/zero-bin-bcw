@@ -152,7 +152,7 @@ jobs:
           BLOCK_START: 10
           BLOCK_END: 10
           OTHER_ARGS: "pgo.test.run"
-          RPC_ENDPOINT: "http://35.208.84.178:8545"
+          RPC_ENDPOINT: "IMX_RPC"
           CPU_THRESHOLD: 1200
         run: |-
           ./tools/run-benchmark.sh ${{ env.MACHINE_TYPE }} ${{ env.NUM_WORKERS }} ${{ env.CPU }} ${{ env.CPU }} ${{ env.MEMORY }} ${{ env.MEMORY }} ${{ env.BLOCK_START }} ${{ env.BLOCK_END }} ${{ env.OTHER_ARGS }} ${{ env.RPC_ENDPOINT }}

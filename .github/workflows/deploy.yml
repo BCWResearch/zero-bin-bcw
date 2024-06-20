@@ -150,7 +150,7 @@ jobs:
           CPU: 55
           MEMORY: 32Gi
           BLOCK_START: 10
-          BLOCK_END: 12
+          BLOCK_END: 10
           OTHER_ARGS: "pgo.test.run"
           RPC_ENDPOINT: "http://35.208.84.178:8545"
           CPU_THRESHOLD: 1200

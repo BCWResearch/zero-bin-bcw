@@ -1,7 +1,7 @@
 FROM rustlang/rust:nightly-bullseye-slim@sha256:2be4bacfc86e0ec62dfa287949ceb47f9b6d9055536769bdee87b7c1788077a9 as builder
 
 # Install jemalloc
-RUN apt-get update && apt-get install -y libjemalloc2 libjemalloc-dev make clang-16 libssl-dev pkg-config build-essential
+RUN apt-get update && apt-get install -y libjemalloc2 libjemalloc-dev make clang-16 libssl-dev pkg-config
 
 # Install llvm-tools-preview (requirement for cargo-pgo to compile an optimized binary)
 RUN rustup component add llvm-tools-preview
@@ -30,8 +30,6 @@ COPY ./rust-toolchain.toml ./
 COPY ./target/pgo-profiles/*.profraw ./target/pgo-profiles/
 
 RUN cargo pgo optimize build -- --bin worker
-
-RUN ls -lha ./target/*
 
 COPY common ./common
 COPY ops ./ops

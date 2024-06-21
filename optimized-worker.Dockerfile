@@ -31,6 +31,8 @@ COPY ./target/pgo-profiles/*.profraw ./target/pgo-profiles/
 
 RUN cargo pgo optimize build -- --bin worker
 
+RUN ls -lha ./target/*
+
 COPY common ./common
 COPY ops ./ops
 COPY worker ./worker

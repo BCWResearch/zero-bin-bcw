@@ -1,4 +1,6 @@
-# expects GCS_UPLOAD_PATH environment variable
+# expects GCS_UPLOAD_BUCKET environment variable
+# optional GCS_UPLOAD_DIR environment variable
+#   - if this one is not set, it will place the PGO file in the root of the bucket
 # optional WORKER_RELATIVE_PATH environment variable
 #   - if this one is not set, it will assume: `./target/x86_64-unknown-linux-gnu/release/worker`
 # optional PROFILE_DIRECTORY environment variable
@@ -14,6 +16,15 @@ from google.cloud import storage
 
 GCS_UPLOAD_BUCKET = os.environ.get("GCS_UPLOAD_BUCKET")
 assert(GCS_UPLOAD_BUCKET is not None)
+
+# adds a trailing '/' if there wasn't one specified by the user
+GCS_UPLOAD_DIR = os.environ.get("GCS_UPLOAD_DIR")
+if GCS_UPLOAD_DIR is None:
+    GCS_UPLOAD_DIR = ""
+elif GCS_UPLOAD_DIR.endswith('/'):
+    pass
+else:
+    GCS_UPLOAD_DIR += '/'
 
 WORKER_PATH = os.environ.get("WORKER_PATH")
 if WORKER_PATH is None:
@@ -35,7 +46,9 @@ def upload_pgo_file_to_gcs(file_path):
     print("Uploading the file to the bucket...")
     # Create a new blob and upload the file's content
     file_name = os.path.basename(file_path)
-    blob = bucket.blob(file_name)
+
+    upload_path = GCS_UPLOAD_DIR + file_name
+    blob = bucket.blob(upload_path)
     blob.upload_from_filename(file_path)
     print("Finished. Shutting down...")
 

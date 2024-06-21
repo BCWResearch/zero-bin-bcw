@@ -45,5 +45,5 @@ RUN cargo pgo optimize build -- --bin worker
 
 FROM debian:bullseye-slim
 RUN apt-get update && apt-get install -y ca-certificates libjemalloc2 make libssl-dev
-COPY --from=builder ./target/release/worker /usr/local/bin/worker
+COPY --from=builder ./target/x86_64-unknown-linux-gnu/release/worker /usr/local/bin/worker
 CMD ["worker"]

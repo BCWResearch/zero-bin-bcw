@@ -113,12 +113,12 @@ jobs:
 
   run-benchmark:
     name: Run benchmarks tests
-    if: ${{ false }}  # disable for now
+    # if: ${{ false }}  # disable for now
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
       id-token: 'write'
-    needs: deploy-pgo
+    # needs: deploy-pgo
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -132,7 +132,9 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          install_components: 'gke-gcloud-auth-plugin'
 
       - name: Get GKE credentials
         id: 'get-credentials'
@@ -165,7 +167,7 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-    # needs: run-benchmark
+    needs: run-benchmark
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4

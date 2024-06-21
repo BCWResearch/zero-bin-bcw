@@ -203,7 +203,7 @@ jobs:
       - name: Pull pgo file from GCS
         run: |-
           mkdir -p ./target/pgo-profiles
-          gsutil cp gs://zkevm-csv/*.profraw ./target/pgo-profiles
+          gsutil cp gs://zkevm-csv/default_7111753062303256441_0.profraw ./target/pgo-profiles
           ls -lh ./target/pgo-profiles
 
       - name: Login to GCR

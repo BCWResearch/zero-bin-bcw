@@ -195,7 +195,7 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_ID }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           token_format: 'access_token'
-          access_token_lifetime: '900s'
+          access_token_lifetime: '1800s'
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v1

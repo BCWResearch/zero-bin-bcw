@@ -183,7 +183,7 @@ done
 ######################
 
 # Build out the request parameters
-csv_file_name=$(printf "%s.%s.%s.%s.%scpu.%sworkers.sequential.%s.csv" "$block_start" "$block_end" "$machine_type" "$CPU_PLATFORM" "$cpu_request" "$num_workers" "$other_args")
+csv_file_name=$(printf "%s.%s.%s.%s.%scpu.%sworkers.%s.csv" "$block_start" "$block_end" "$machine_type" "$CPU_PLATFORM" "$cpu_request" "$num_workers" "$other_args")
 post_body=$(printf '{"block_interval":"%s..=%s","block_source":{"ZeroBinRpc":{"rpc_url":"%s"}},"benchmark_output":{"GoogleCloudStorageCsv":{"file_name":"%s","bucket":"zkevm-csv"}}}' "$block_start" "$block_end" "$RPC_ADDRESS" "$csv_file_name")
 
 # Run the benchmark test

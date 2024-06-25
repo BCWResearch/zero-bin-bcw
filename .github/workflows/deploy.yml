@@ -101,15 +101,8 @@ jobs:
       - name: Deploy pgo-worker to GKE
         id: deploy
         run: |-
-          cat <<EOF | envsubst | kubectl patch deployment zero-bin-worker --patch "$(cat -)" --namespace=zkevm
-          spec:
-            replicas: 1
-            template:
-              spec:
-                containers:
-                - name: worker
-                  image: us.gcr.io/immutable-418115/zero-bin-pgo-worker:sha-${GITHUB_SHA}
-          EOF
+          cd ./deploy/helm
+          helm template zero-bin ./zero-bin -f ./zero-bin/values.yaml --set hull.config.specific.version=sha-${GITHUB_SHA} -n zkevm | kubectl apply -f - -l app.kubernetes.io/component=worker
 
   run-benchmark:
     name: Run benchmarks tests

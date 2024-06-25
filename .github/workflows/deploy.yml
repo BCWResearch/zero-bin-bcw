@@ -152,10 +152,10 @@ jobs:
           NUM_WORKERS: 1
           CPU: 55
           MEMORY: 32Gi
-          BLOCK_START: 10
-          BLOCK_END: 10
+          BLOCK_START: 101368
+          BLOCK_END: 101368
           OTHER_ARGS: "pgo.test.run"
-          RPC_ENDPOINT: "IMX_RPC"
+          RPC_ENDPOINT: "INTERNAL_RPC"
           CPU_THRESHOLD: 1200
         run: |-
           ./tools/run-benchmark.sh ${{ env.MACHINE_TYPE }} ${{ env.NUM_WORKERS }} ${{ env.CPU }} ${{ env.CPU }} ${{ env.MEMORY }} ${{ env.MEMORY }} ${{ env.BLOCK_START }} ${{ env.BLOCK_END }} ${{ env.OTHER_ARGS }} ${{ env.RPC_ENDPOINT }}

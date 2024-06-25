@@ -135,6 +135,7 @@ jobs:
         with:
           cluster_name: 'immutable-prod'
           location: 'us-central1'
+          use_auth_provider: true
 
       - name: Run benchmark script
         env:
@@ -151,6 +152,7 @@ jobs:
           RPC_ENDPOINT: "INTERNAL_RPC"
           CPU_THRESHOLD: 1200
         run: |-
+          cat ${{ env.KUBECONFIG }}
           ./tools/run-benchmark.sh ${{ env.MACHINE_TYPE }} ${{ env.NUM_WORKERS }} ${{ env.CPU }} ${{ env.CPU }} ${{ env.MEMORY }} ${{ env.MEMORY }} ${{ env.BLOCK_START }} ${{ env.BLOCK_END }} ${{ env.OTHER_ARGS }} ${{ env.RPC_ENDPOINT }}
           kubectl scale --replicas=0 deployment/zero-bin-worker -n zkevm
 

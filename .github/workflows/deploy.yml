@@ -19,7 +19,7 @@ jobs:
   build-pgo:
     # if: ${{ false }}  # disable for now
     name: Build pgo docker image
-    runs-on: ubuntu-latest
+    runs-on: gha-runner-set
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -68,7 +68,7 @@ jobs:
   deploy-pgo:
     name: Deploy pgo-worker to GKE
     # if: ${{ false }}  # disable for now
-    runs-on: ubuntu-latest
+    runs-on: gha-runner-set
     needs: build-pgo
     permissions:
       contents: 'read'
@@ -114,7 +114,7 @@ jobs:
   run-benchmark:
     name: Run benchmarks tests
     # if: ${{ false }}  # disable for now
-    runs-on: ubuntu-latest
+    runs-on: gha-runner-set
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -163,7 +163,7 @@ jobs:
 
   build:
     name: Build docker images
-    runs-on: ubuntu-latest
+    runs-on: gha-runner-set
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -239,7 +239,7 @@ jobs:
 
   deploy:
     name: Deploy to GKE
-    runs-on: ubuntu-latest
+    runs-on: gha-runner-set
     needs: build
     permissions:
       contents: 'read'

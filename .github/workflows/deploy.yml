@@ -137,6 +137,10 @@ jobs:
           location: 'us-central1'
           use_auth_provider: true
 
+      - uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.2'
+
       - name: Run benchmark script
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}

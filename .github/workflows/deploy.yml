@@ -102,7 +102,7 @@ jobs:
         id: deploy
         run: |-
           cd ./deploy/helm
-          helm template zero-bin ./zero-bin -f ./zero-bin/values.yaml --set hull.config.specific.version=sha-${GITHUB_SHA} -n zkevm | kubectl apply -f - -l app.kubernetes.io/component=worker
+          helm template zero-bin ./zero-bin -f ./zero-bin/values.yaml --set hull.config.specific.version=sha-${GITHUB_SHA} --set hull.config.specific.workerImageName=zero-bin-pgo-worker -n zkevm | kubectl apply -f - -l app.kubernetes.io/component=worker
 
   run-benchmark:
     name: Run benchmarks tests

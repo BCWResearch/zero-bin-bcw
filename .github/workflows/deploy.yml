@@ -112,6 +112,8 @@ jobs:
       contents: 'read'
       id-token: 'write'
     needs: deploy-pgo
+    env:
+      USE_GKE_GCLOUD_AUTH_PLUGIN: True
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

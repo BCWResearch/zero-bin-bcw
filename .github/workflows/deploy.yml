@@ -113,7 +113,7 @@ jobs:
       id-token: 'write'
     needs: deploy-pgo
     env:
-      USE_GKE_GCLOUD_AUTH_PLUGIN: True
+      USE_GKE_GCLOUD_AUTH_PLUGIN: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -141,7 +141,7 @@ jobs:
 
       - uses: azure/setup-kubectl@v3
         with:
-          version: 'v1.29.2'
+          version: 'v1.28.2'
 
       - name: Run benchmark script
         env:
@@ -158,7 +158,8 @@ jobs:
           RPC_ENDPOINT: "INTERNAL_RPC"
           CPU_THRESHOLD: 1200
         run: |-
-          cat ${{ env.KUBECONFIG }}
+          export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+          gcloud container clusters get-credentials immutable-prod --project ${{ secrets.GCP_PROJECT_ID }} --region us-central1
           ./tools/run-benchmark.sh ${{ env.MACHINE_TYPE }} ${{ env.NUM_WORKERS }} ${{ env.CPU }} ${{ env.CPU }} ${{ env.MEMORY }} ${{ env.MEMORY }} ${{ env.BLOCK_START }} ${{ env.BLOCK_END }} ${{ env.OTHER_ARGS }} ${{ env.RPC_ENDPOINT }}
           kubectl scale --replicas=0 deployment/zero-bin-worker -n zkevm
 

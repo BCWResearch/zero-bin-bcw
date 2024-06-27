@@ -152,8 +152,8 @@ jobs:
           NUM_WORKERS: 1
           CPU: 55
           MEMORY: 32Gi
-          BLOCK_START: 142810
-          BLOCK_END: 142810
+          BLOCK_START: 108184
+          BLOCK_END: 108184
           OTHER_ARGS: "pgo.test.run"
           RPC_ENDPOINT: "INTERNAL_RPC"
           CPU_THRESHOLD: 1200

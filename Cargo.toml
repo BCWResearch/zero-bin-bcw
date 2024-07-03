@@ -3,7 +3,8 @@ members = ["leader", "worker", "common", "ops", "verifier", "rpc", "prover", "co
 resolver = "2"
 
 [workspace.dependencies]
-paladin-core = "0.4.2"
+#paladin-core = "0.4.2"
+paladin-core = { git = "https://github.com/julian-bcw/paladin-bcw", rev = "b6fa8d01d5b56d0e3257894dfa9052f4fc2af76f" }
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 dotenvy = "0.15.7"
 tracing = "0.1"

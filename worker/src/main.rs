@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -11,7 +12,6 @@ use tokio::select;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::task;
 use uuid::Uuid;
-
 mod init;
 
 #[derive(Parser, Debug)]
@@ -36,20 +36,23 @@ async fn main() -> Result<()> {
         .into_prover_state_manager()
         .initialize()?;
 
-    let runtime = Arc::new(WorkerRuntime::from_config(&args.paladin, register()).await?);
-    const IPC_ROUTING_KEY: Uuid = Uuid::max(); // copied over from paladin-core's WorkerRuntime code in src/runtime/mod.rs
-    let cancel_message: WorkerIpc = WorkerIpc::ExecutionError {
-        routing_key: IPC_ROUTING_KEY,
-    };
-    let runtime_clone = runtime.clone();
+    let runtime = WorkerRuntime::from_config(&args.paladin, register()).await?;
+    //const IPC_ROUTING_KEY: Uuid = Uuid::max(); // copied over from paladin-core's
+    // WorkerRuntime code in src/runtime/mod.rs let cancel_message: WorkerIpc =
+    // WorkerIpc::ExecutionError {    routing_key: IPC_ROUTING_KEY,
+    //};
+    //let runtime_clone = runtime.clone();
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
     let sigterm_task = task::spawn(async move {
-        let runtime_canceler = runtime_clone.get_ipc_sender().await.unwrap();
+        //let runtime_canceler = runtime_clone.get_ipc_sender().await.unwrap();
         sigterm.recv().await;
         info!("Received SIGTERM, terminating...");
-        runtime_canceler.publish(&cancel_message).await.unwrap();
+        //runtime_canceler.publish(&cancel_message).await.unwrap();
+        r.store(false, Ordering::SeqCst);
     });
     let runtime_task = task::spawn(async move {
-        match runtime.main_loop().await {
+        match runtime.main_loop(Some(running)).await {
             Ok(()) => info!("Worker main loop ended..."),
             Err(err) => error!("Error occured with the runtime: {}", err),
         }

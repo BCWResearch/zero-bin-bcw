@@ -148,12 +148,12 @@ jobs:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_WORKLOAD_IDENTITY_ID: ${{ secrets.GCP_WORKLOAD_IDENTITY_ID }}
           GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          MACHINE_TYPE: "t2d-standard-60"
+          MACHINE_TYPE: "n4-highcpu-64"
           NUM_WORKERS: 1
           CPU: 55
           MEMORY: 32Gi
-          BLOCK_START: 108184
-          BLOCK_END: 108184
+          BLOCK_START: 6644
+          BLOCK_END: 6644
           OTHER_ARGS: "pgo.test.run"
           RPC_ENDPOINT: "INTERNAL_RPC"
           CPU_THRESHOLD: 1200
